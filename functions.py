@@ -1,15 +1,29 @@
 import streamlit as st
 import pandas as pd
+from pathlib import Path
 
-@st.cache_data
-def load_data():
-    import os
-    if os.path.exists('data/dataset_clean.csv'):
-        return pd.read_csv('data/dataset_clean.csv')
+CACHE_FILE = Path("data/dataset_clean.csv")
 
-    df = pd.read_csv('data/en.openfoodfacts.org.products.tsv', sep='\t', on_bad_lines='skip', engine='python')
+def load_data(uploaded_file=None):
+
+    if CACHE_FILE.exists():
+        return pd.read_csv(CACHE_FILE)
+
+    if uploaded_file is None:
+        st.error("Veuillez importer le fichier OpenFoodFacts TSV.")
+        st.stop()
+
+    df = pd.read_csv(
+        uploaded_file,
+        sep="\t",
+        on_bad_lines="skip"
+    )
+
     df = clean(df)
-    df.to_csv('data/dataset_clean.csv', index=False)
+
+    CACHE_FILE.parent.mkdir(exist_ok=True)
+    df.to_csv(CACHE_FILE, index=False)
+
     return df
 
 def clean(df):
