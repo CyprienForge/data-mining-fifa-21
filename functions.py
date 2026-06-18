@@ -1,21 +1,33 @@
 import streamlit as st
 import pandas as pd
+from pathlib import Path
 
-@st.cache_data
-def load_data():
-    import os
-    if os.path.exists('data/dataset_clean.csv'):
-        return pd.read_csv('data/dataset_clean.csv')
+CACHE_FILE = Path("data/dataset_clean.csv")
 
-    df = pd.read_csv('data/en.openfoodfacts.org.products.tsv', sep='\t', on_bad_lines='skip', engine='python')
+def load_data(uploaded_file=None):
+
+    if CACHE_FILE.exists():
+        return pd.read_csv(CACHE_FILE)
+
+    if uploaded_file is None:
+        st.error("Veuillez importer le fichier OpenFoodFacts TSV.")
+        st.stop()
+
+    df = pd.read_csv(
+        uploaded_file,
+        sep="\t",
+        on_bad_lines="skip"
+    )
+
     df = clean(df)
-    df.to_csv('data/dataset_clean.csv', index=False)
+
+    CACHE_FILE.parent.mkdir(exist_ok=True)
+    df.to_csv(CACHE_FILE, index=False)
     return df
 
 def clean(df):
     df = clean_columns(df)
     df = get_best_rows(df)
-    print(df)
     return df
 
 def get_best_rows(df, n=25000):
@@ -40,30 +52,45 @@ def clean_columns(df):
 
 def remove(df):
     cols_a_supprimer = [
-        # MÃ©tadonnÃ©es techniques
-        "code",  # identifiant interne
-        "url",  # lien web
-        "creator",  # utilisateur qui a crÃ©Ã© l'entrÃ©e
-        "created_t",  # timestamp brut
-        "created_datetime",  # doublon lisible de created_t
-        "last_modified_t",  # timestamp brut
-        "last_modified_datetime",  # doublon lisible
+        "code",
+        "url",
+        "creator",
+        "created_t",
+        "created_datetime",
+        "last_modified_t",
+        "last_modified_datetime",
 
-        # Tags redondants avec d'autres colonnes
-        "brands_tags",  # doublon de brands
-        "countries_tags",  # doublon de countries
-        "countries_en",  # doublon de countries
-        "states_tags",  # doublon de states
-        "states_en",  # doublon de states
-        "additives_tags",  # doublon de additives
-        "additives_en",  # doublon de additives
+        "brands_tags",
+        "countries_tags",
+        "countries_en",
+        "states_tags",
+        "states_en",
+        "additives_tags",
+        "additives_en",
 
-        # Peu exploitables pour du data mining
-        "states",  # statut de complÃ©tion de la fiche
-        "ingredients_text",  # texte libre, difficile Ã  exploiter
-        "serving_size",  # trÃ¨s peu renseignÃ© et non standardisÃ©
+        "states",
+        "ingredients_text",
+        "serving_size"
     ]
 
     df = df.drop(columns=[c for c in cols_a_supprimer if c in df.columns])
-
     return df
+
+def detect_type(serie: pd.DataFrame) -> str:
+    s = pd.Series(serie).dropna()
+    match s.dtype.name:
+        case 'float64':
+            if s.apply(float.is_integer).all():
+                return "Quantitatif discret"
+            return "Quantitatif continu"
+        case 'int64':
+            return "Quantitatif discret"
+        case _:
+            ORDINAL = ['faible', 'moyen', 'élevé', 'très élevé',
+                       'petit', 'grand', 'jamais', 'parfois', 'souvent',
+                       'toujours', 'mauvais', 'bien', 'très bien', 'excellent',
+                       'débutant', 'intermédiaire', 'avancé', 'expert',
+                       'xs', 's', 'm', 'l', 'xl', '2xl', '3xl']
+            if any(v.lower() in ORDINAL for v in s):
+                return 'Qualitatif ordinal'
+            return 'Qualitatif nominal'
