@@ -2,10 +2,13 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 
+CACHE_FILE_CLEAN = Path("data/dataset_clean_with_streamlit.csv")
 CACHE_FILE = Path("data/dataset_clean.csv")
 
-def load_data(uploaded_file=None):
-
+def load_data(uploaded_file=None, is_clean=False):
+    if CACHE_FILE_CLEAN.exists() and is_clean is False:
+        return pd.read_csv(CACHE_FILE_CLEAN)
+    
     if CACHE_FILE.exists():
         return pd.read_csv(CACHE_FILE)
 
