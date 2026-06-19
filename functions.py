@@ -3,11 +3,13 @@ import pandas as pd
 from pathlib import Path
 
 from pandas import Series, DataFrame
-
+CACHE_FILE_CLEAN = Path("data/dataset_clean_with_streamlit.csv")
 CACHE_FILE = Path("data/dataset_clean.csv")
 
-def load_data(uploaded_file=None):
-
+def load_data(uploaded_file=None, is_clean=False):
+    if CACHE_FILE_CLEAN.exists() and is_clean is False:
+        return pd.read_csv(CACHE_FILE_CLEAN)
+    
     if CACHE_FILE.exists():
         return pd.read_csv(CACHE_FILE)
 
@@ -61,7 +63,8 @@ def remove(df):
         "created_datetime",
         "last_modified_t",
         "last_modified_datetime",
-
+        "pnns_groups_1",
+        "pnns_groups_2",
         "brands_tags",
         "countries_tags",
         "countries_en",

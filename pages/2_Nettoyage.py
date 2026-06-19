@@ -14,7 +14,8 @@ st.set_page_config(
 )
 st.title("Page 2 - Nettoyage des données")
 
-df = load_data()
+df = load_data(uploaded_file=None, is_clean=True)
+df_clean = df.copy()
 
 st.subheader("Aperçu des données")
 st.dataframe(df)
@@ -149,12 +150,6 @@ else:
     c4.metric("Val. manquantes après", int(df_clean.isnull().sum().sum()))
 
     st.dataframe(df_clean)
-
-    if st.button("Valider ce nettoyage pour les pages suivantes"):
-        st.session_state["df_clean"] = df_clean
-        st.success(
-            "Le DataFrame nettoyé est enregistré dans st.session_state['df_clean']."
-        )
 
 # 2. DÉTECTION ET TRAITEMENT DES OUTLIERS
 st.divider()
@@ -368,4 +363,5 @@ c2.metric("Colonnes (départ → final)", f"{df.shape[1]} → {df_clean.shape[1]
  
 if st.button("Valider ces données nettoyées pour les pages suivantes"):
     st.session_state["df_clean"] = df_clean
-    st.success("Le DataFrame nettoyé est enregistré dans st.session_state['df_clean'].")
+    df_clean.to_csv("data/dataset_clean_with_streamlit.csv", index=False, encoding="utf-8")
+    st.success("Le fichier CSV a été créé dans le dossier data/.")
