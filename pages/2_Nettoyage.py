@@ -264,28 +264,37 @@ else:
  
     encoding_method = st.radio(
         "Méthode d'encodage",
-        ["Aucun (laisser tel quel)", "One-Hot Encoding"],
+        ["Aucun (laisser tel quel)", "One-Hot Encoding", "Label Encoding"],
         horizontal=True,
         key="encoding_method",
     )
- 
+
     if cols_to_encode and encoding_method != "Aucun (laisser tel quel)":
+        
         remaining_na = df_clean[cols_to_encode].isnull().sum().sum()
         if remaining_na > 0:
             st.info(
                 f"{remaining_na} valeur(s) manquante(s) restent dans les colonnes sélectionnées ; "
                 "pensez à les traiter à l'étape 1 si besoin avant l'encodage."
             )
- 
-        drop_first = st.checkbox(
-            "Supprimer une catégorie de référence par colonne (drop_first, évite la colinéarité)",
-            value=False,
-            key="drop_first",
-        )
-        df_clean = pd.get_dummies(
-            df_clean, columns=cols_to_encode, drop_first=drop_first, dtype=int
-        )
- 
+
+        # --- CAS 1 : ONE-HOT ENCODING ---
+        if encoding_method == "One-Hot Encoding":
+            drop_first = st.checkbox(
+                "Supprimer une catégorie de référence par colonne (drop_first, évite la colinéarité)",
+                value=False,
+                key="drop_first",
+            )
+            df_clean = pd.get_dummies(
+                df_clean, columns=cols_to_encode, drop_first=drop_first, dtype=int
+            )
+            
+        # --- CAS 2 : LABEL ENCODING ---
+        elif encoding_method == "Label Encoding":
+            for col in cols_to_encode:
+                le = LabelEncoder()
+                df_clean[col] = le.fit_transform(df_clean[col].astype(str))
+
     st.dataframe(df_clean)
 
 # 4. NORMALISATION DES DONNÉES

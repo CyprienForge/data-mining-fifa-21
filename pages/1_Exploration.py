@@ -16,8 +16,8 @@ if not CACHE_FILE.exists():
     st.header("Chargement des données")
 
     fichier = st.file_uploader(
-        "Importer le Dataset CSV",
-        type=["csv"]
+        "Importer le CSV players_21.csv",
+        type=["tsv", "csv"]
     )
 
     if fichier:

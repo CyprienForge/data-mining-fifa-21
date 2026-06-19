@@ -28,10 +28,17 @@ with col2:
     method = st.selectbox("Algorithme", ["K-Means", "DBSCAN", "Spectral Clustering"])
 
 if workspace == "Données projetées par ACP":
-    n_pca = st.slider("Composantes ACP", 2, min(10, X_scaled.shape[1]), 2)
-    pca_work = PCA(n_components=n_pca)
-    X_work = pca_work.fit_transform(X_scaled)
-    st.caption(f"Variance expliquée cumulée : {pca_work.explained_variance_ratio_.sum():.1%}")
+    n_components_pca = st.slider(
+        "Nombre de composantes ACP", 
+        min_value=2, 
+        max_value=min(10, X_scaled.shape[1]), 
+        value=5
+    )
+    pca = PCA(n_components=n_components_pca)
+    X_work = pca.fit_transform(X_scaled)
+    st.caption(
+        f"Variance expliquée cumulée : {pca.explained_variance_ratio_.sum():.1%}"
+    )
 else:
     X_work = X_scaled
 

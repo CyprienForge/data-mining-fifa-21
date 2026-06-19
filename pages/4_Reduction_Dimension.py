@@ -9,6 +9,7 @@ from scipy.sparse.csgraph import connected_components
 import matplotlib.pyplot as plt
 from functions import load_data
 from sklearn.manifold import MDS
+import sys
 
 st.set_page_config(
     page_title="Réduction de dimension",
@@ -18,14 +19,11 @@ st.set_page_config(
 st.title("Page 4 - Réduction de dimension")
 
 df = load_data()
-
+print(df)
 st.header("Analyse en Composantes Principales (ACP)")
 
 # Sélection des colonnes numériques
 df_num = df.select_dtypes(include=np.number)
-
-# Suppression des lignes contenant des NaN
-df_num = df_num.dropna()
 
 if len(df_num.columns) < 2:
     st.error("Il faut au moins 2 variables numériques pour réaliser une ACP.")
@@ -95,18 +93,31 @@ st.pyplot(fig)
 
 st.subheader("Projection des individus sur le plan factoriel (F1, F2)")
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.scatter(
-    X_pca[:, 0],
-    X_pca[:, 1],
-    alpha=0.5
-)
-ax.set_xlabel(
-    f"F1 ({variance_expliquee[0]:.2f}%)"
-)
-ax.set_ylabel(
-    f"F2 ({variance_expliquee[1]:.2f}%)"
-)
-ax.set_title("Projection des individus")
+
+ax.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.4, color="gray")
+
+distances = np.sqrt(X_pca[:, 0] ** 2 + X_pca[:, 1] ** 2)
+
+seuil_distance = np.percentile(distances, 99.5)
+
+noms_joueurs = df["long_name"].values
+
+for i, nom in enumerate(noms_joueurs):
+    if distances[i] >= seuil_distance:
+        ax.annotate(
+            nom,
+            (X_pca[i, 0], X_pca[i, 1]),
+            xytext=(5, 5),
+            textcoords="offset points",
+            fontsize=9,
+            fontweight="bold",
+            alpha=0.9,
+        )
+        ax.scatter(X_pca[i, 0], X_pca[i, 1], color="red", s=30)
+
+ax.set_xlabel(f"F1 ({variance_expliquee[0]:.2f}%)")
+ax.set_ylabel(f"F2 ({variance_expliquee[1]:.2f}%)")
+ax.set_title("Projection des individus (Zoom sur les profils atypiques)")
 ax.grid(True)
 st.pyplot(fig)
 
@@ -186,20 +197,35 @@ with st.spinner("Calcul de l'Isomap en cours (Optimisé)..."):
     except Exception as e:
         st.error(f"Une erreur est survenue lors du calcul d'Isomap : {e}")
 
-st.header("Conclusion")
+st.header("Projection ACP à 5 composantes (visualisée en 2D)")
 
-st.markdown("""
+pca_5 = PCA(n_components=5)
+X_pca5 = pca_5.fit_transform(X_scaled)
 
-    L'ACP est une méthode de réduction de dimension linéaire.
-    L'Isomap est une méthode de réduction de dimension non-linéaire.
-            
-    Pour comparer les distances, l'ACP va se baser sur **la distance euclidienne** tandis que l'Isomap va parcourir de **voisins en voisins**
+variance_5 = pca_5.explained_variance_ratio_ * 100
+cumvar_5 = np.cumsum(variance_5)
 
-    Pour analyser un peu les résultats obtenus pour l'ACP : 
-
-        - Les deux premières composantes n'ont que respectivement 25% et 12% de variance expliquée
-        - Par conséquent les flèches dans le cercle de corrélation sont assez courtes.
-        - Les variables ne sont donc pas extrêmement bien expliquées par mes composantes 1 et 2 (CP1 / CP2)
-        - Sur la projection on remarque qu'une grande partie de nos individus sont similaires avec une grande densité de points
-
+st.markdown(f"""
+- **Variance cumulée à 5 composantes** : `{cumvar_5[-1]:.1f}%`
+- CP1 : `{variance_5[0]:.1f}%` | CP2 : `{variance_5[1]:.1f}%` | CP3 : `{variance_5[2]:.1f}%` | CP4 : `{variance_5[3]:.1f}%` | CP5 : `{variance_5[4]:.1f}%`
 """)
+
+fig5, ax5 = plt.subplots(figsize=(10, 6))
+ax5.scatter(X_pca5[:, 0], X_pca5[:, 1], alpha=0.3, s=5, color="steelblue")
+
+distances_5 = np.sqrt(X_pca5[:, 0] ** 2 + X_pca5[:, 1] ** 2)
+seuil_5 = np.percentile(distances_5, 99.5)
+noms = df["long_name"].values
+
+for i, nom in enumerate(noms):
+    if distances_5[i] >= seuil_5:
+        ax5.annotate(nom, (X_pca5[i, 0], X_pca5[i, 1]),
+                     xytext=(5, 5), textcoords="offset points",
+                     fontsize=9, fontweight="bold", alpha=0.9)
+        ax5.scatter(X_pca5[i, 0], X_pca5[i, 1], color="red", s=30)
+
+ax5.set_xlabel(f"CP1 ({variance_5[0]:.1f}%)")
+ax5.set_ylabel(f"CP2 ({variance_5[1]:.1f}%)")
+ax5.set_title("Projection des individus - ACP 5 composantes (plan CP1/CP2)")
+ax5.grid(True)
+st.pyplot(fig5)
