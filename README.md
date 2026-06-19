@@ -1,5 +1,5 @@
-Vous devez rajouter le jeu de données ici : 
+## DataMining Projet - NGUYEN Tommy & FORGE Cyprien (WEB1)
 
-/
-| data/
-    | en.openfoodfacts.org.products.tsv
+### Dataset
+
+Nous avons choisi le dataset *OpenFood*

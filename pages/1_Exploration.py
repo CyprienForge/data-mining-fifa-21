@@ -1,19 +1,25 @@
 import pandas as pd
 import streamlit as st
 from functions import load_data, detect_type
+from pathlib import Path
+
+CACHE_FILE = Path("data/dataset_clean.csv")
 
 st.title("Partie I : Exploration initiale des données")
 
 st.header("1. Chargement des données")
 
-fichier = st.file_uploader(
-    "Importer le TSV OpenFoodFacts",
-    type=["tsv"]
-)
-
 df = None
-if fichier:
-    df = load_data(fichier)
+if not CACHE_FILE.exists():
+    fichier = st.file_uploader(
+        "Importer le TSV OpenFoodFacts",
+        type=["tsv"]
+    )
+
+    if fichier:
+        df = load_data(fichier)
+else:
+    df = pd.read_csv(CACHE_FILE)
 
 if df is not None:
     st.header("2. Aperçu des données")
