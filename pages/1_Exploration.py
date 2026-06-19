@@ -7,13 +7,17 @@ CACHE_FILE = Path("data/dataset_clean.csv")
 
 st.title("Partie I : Exploration initiale des données")
 
-st.header("1. Chargement des données")
+
 
 df = None
+
 if not CACHE_FILE.exists():
+
+    st.header("Chargement des données")
+
     fichier = st.file_uploader(
-        "Importer le TSV OpenFoodFacts",
-        type=["tsv"]
+        "Importer le Dataset CSV",
+        type=["csv"]
     )
 
     if fichier:
@@ -22,7 +26,7 @@ else:
     df = pd.read_csv(CACHE_FILE)
 
 if df is not None:
-    st.header("2. Aperçu des données")
+    st.header("Aperçu des données")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -32,7 +36,7 @@ if df is not None:
         st.subheader("Dernières lignes")
         st.dataframe(df.tail(10))
 
-    st.header("3. Résumé statistique")
+    st.header("Résumé statistique")
 
     c1, c2 = st.columns(2)
     c1.metric("Nombre de lignes", df.shape[0])

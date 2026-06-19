@@ -6,25 +6,28 @@ from pandas import Series, DataFrame
 CACHE_FILE_CLEAN = Path("data/dataset_clean_with_streamlit.csv")
 CACHE_FILE = Path("data/dataset_clean.csv")
 
-def load_data(uploaded_file=None, is_clean=False):
-    if CACHE_FILE_CLEAN.exists() and is_clean is False:
-        return pd.read_csv(CACHE_FILE_CLEAN)
-    
+def load_data(uploaded_file=None):
     if CACHE_FILE.exists():
         return pd.read_csv(CACHE_FILE)
 
     if uploaded_file is None:
-        st.error("Veuillez importer le fichier OpenFoodFacts TSV.")
+        st.error("Veuillez importer le dataset.")
         st.stop()
+
+    contenu = uploaded_file.read().decode('utf-8')
+    st.write(contenu[:500])
+    uploaded_file.seek(0)
 
     df = pd.read_csv(
         uploaded_file,
-        sep="\t",
-        on_bad_lines="skip"
+        sep=',',
+        encoding='utf-8',
+        quotechar='"',
+        skipinitialspace=True,
+        low_memory=False
     )
 
     df = clean(df)
-
     CACHE_FILE.parent.mkdir(exist_ok=True)
     df.to_csv(CACHE_FILE, index=False)
     return df
