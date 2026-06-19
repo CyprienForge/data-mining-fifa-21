@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 
+from pandas import Series, DataFrame
 CACHE_FILE_CLEAN = Path("data/dataset_clean_with_streamlit.csv")
 CACHE_FILE = Path("data/dataset_clean.csv")
 
@@ -98,3 +99,12 @@ def detect_type(serie: pd.DataFrame) -> str:
             if any(v.lower() in ORDINAL for v in s):
                 return 'Qualitatif ordinal'
             return 'Qualitatif nominal'
+
+def get_data_box(data: pd.DataFrame) :
+    Q1 = data.quantile(0.25)
+    Q3 = data.quantile(0.75)
+    IQR = Q3 - Q1
+    borne_min = Q1 - 1.5 * IQR
+    borne_max = Q3 + 1.5 * IQR
+    outliers = data[(data < borne_min) | (data > borne_max)]
+    return Q1, Q3, IQR, borne_min, borne_max, outliers
